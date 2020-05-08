@@ -12,7 +12,7 @@
 #include "nnet.h"
 
 
-int PROPERTY = 5;
+int PROPERTY = 0;
 char *LOG_FILE = "logs/log.txt";
 float INF = 1;
 
@@ -28,7 +28,7 @@ struct timeval start,finish,last_finish;
 //Take in a .nnet filename with path and load the network from the file
 //Inputs:  filename - const char* that specifies the name and path of file
 //Outputs: void *   - points to the loaded neural network
-struct NNet *load_conv_network(const char* filename, int img)
+struct NNet *load_conv_network(const char* filename, char *INPUT_FILE)
 {
     //Load file and check if it exists
     FILE *fstream = fopen(filename,"r");
@@ -254,7 +254,7 @@ struct NNet *load_conv_network(const char* filename, int img)
     float o[nnet->outputSize];
     struct Matrix output = {o, nnet->outputSize, 1};
     //printf("start load inputs\n");
-    load_inputs(img, nnet->inputSize, input_prev);
+    load_inputs(INPUT_FILE, nnet->inputSize, input_prev);
     //printf("load inputs done\n");
     if(NORM_INPUT){
         normalize_input(nnet, &input_prev_matrix);
@@ -584,10 +584,10 @@ float set_wrong_node_constraints(lprec *lp,
 
 
 void initialize_input_interval(struct NNet* nnet,
-                int img, int inputSize, float *input,
+                char* INPUT_FILE, int inputSize, float *input,
                 float *u, float *l)
 {
-    load_inputs(img, inputSize, input);
+    load_inputs(INPUT_FILE, inputSize, input);
     if(PROPERTY == 0){
         for(int i =0;i<inputSize;i++){
             u[i] = input[i]+INF;
@@ -609,24 +609,18 @@ void initialize_input_interval(struct NNet* nnet,
 }
 
 
-void load_inputs(int img, int inputSize, float *input){
+void load_inputs(char* INPUT_FILE, int inputSize, float *input){
 
-    if(img>=100000){
-        printf("ERR: Over 100000 images!\n");
-        exit(1);
-    }
     char str[12];
-    char image_name[18];
+    char image_name[1000];
 
     /*
      * Customize your own dataset
      */
 
-    char tmp[18] = "images/image";
-    strcpy(image_name, tmp);
+    strcpy(image_name, INPUT_FILE);
 
-    sprintf(str, "%d", img);
-    FILE *fstream = fopen(strcat(image_name,str),"r");
+    FILE *fstream = fopen(image_name,"r");
     if (fstream == NULL)
     {
         printf("no input:%s!\n", image_name);

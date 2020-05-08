@@ -12,7 +12,7 @@
 #include "split.h"
 
 #define AVG_WINDOW 5
-#define MAX_THREAD 56
+#define MAX_THREAD 8
 #define MIN_DEPTH_PER_THREAD 5 
 
 int NEED_PRINT = 0;
@@ -24,8 +24,12 @@ int count = 0;
 int thread_tot_cnt  = 0;
 int smear_cnt = 0;
 
+int ORIG=0;
+int TAR=0;
+
+
 int progress = 0;
-int MAX_DEPTH = 30;
+int MAX_DEPTH = 1000000;
 
 float avg_depth = 50;
 
@@ -123,12 +127,8 @@ int check_min1(struct NNet *nnet, struct Matrix *output){
 
 
 int check_not_max1(struct NNet *nnet, struct Matrix *output){
-    for(int i=0;i<nnet->outputSize;i++){
-        if(output->data[i]>0 && i != nnet->target){
-            return 1;
-        }
-    }
-    return 0;
+
+  return output->data[0] > output->data[1] && (output->data[0] - output->data[1] <= 0.3);
 }
 
 
@@ -143,13 +143,7 @@ int check_not_min1(struct NNet *nnet, struct Matrix *output){
 
 
 int check_not_max_norm(struct NNet *nnet, struct Interval *output){
-    float t = output->lower_matrix.data[nnet->target];
-    for(int i=0;i<nnet->outputSize;i++){
-        if(output->upper_matrix.data[i]>t && i != nnet->target){
-            return 1;
-        }
-    }
-    return 0;
+  return 1;
 }
 
 
@@ -239,7 +233,7 @@ void check_adv1(struct NNet* nnet, struct Matrix *adv){
     is_adv = check_functions1(nnet, &output);
     if(is_adv){
         printf("adv found:\n");
-        //printMatrix(adv);
+        printMatrix(adv);
         printMatrix(&output);
         int adv_output = 0;
         for(int i=0;i<nnet->outputSize;i++){

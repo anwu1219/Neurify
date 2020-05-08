@@ -23,6 +23,10 @@
 
 extern int NEED_PRINT;
 extern int NEED_FOR_ONE_RUN;
+
+extern int ORIG;
+extern int TAR;
+
 extern int input_depth;
 extern int adv_found;
 extern int can_t_prove;

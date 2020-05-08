@@ -23,73 +23,41 @@ void sig_handler(int signo)
     }
 }
 
-char* config_args(int argc, char *argv[]){
+int main( int argc, char *argv[]){
     char *FULL_NET_PATH;
-    if(argc>8 || argc<3) {
-        printf("please specify a network\n");
-        printf("./network_test [property] [network]"
-                " [print] [test for one run] [check mode]"
-                " [max depth] [norm input]\n");
-        exit(1);
+    char* INPUT_FILE;
+    if(argc != 6) {
+      printf("please specify a network\n");
+      printf("./network_test [network] [inputfile]"
+             " [inf] [orig] [tar]\n");
+      exit(1);
     }
     for(int i=1;i<argc;i++){
-        if(i==1){
-            PROPERTY = atoi(argv[i]); 
-            if(PROPERTY<0){
-                printf("Wrong input depth");
-                exit(1);
-            } 
-        }
-        if(i==2){
-            FULL_NET_PATH = strdup(argv[i]);
-        }
-        if(i==3){
-            NEED_PRINT = atoi(argv[i]);
-            if(NEED_PRINT != 0 && NEED_PRINT!=1){
-                printf("Wrong print");
-                exit(1);
-            }
-        }
-        if(i==4){
-            NEED_FOR_ONE_RUN = atoi(argv[i]); 
-            if(NEED_FOR_ONE_RUN != 0 && NEED_FOR_ONE_RUN != 1){
-                printf("Wrong test for one run");
-                exit(1);
-            }
-        }
-        if(i==5){
-            if(atoi(argv[i])==0){
-                // Regular mode
-                CHECK_ADV_MODE = 0;
-                MAX_DEPTH = 10;
-            }
-            if(atoi(argv[i])==1){
-                // Only check for adv
-                CHECK_ADV_MODE = 1;
-                MAX_DEPTH = 10;
-                printf("CHECK ADV MODE with MAX_DEPTH 10 by default\n");
-            }
-        }
-        if(i==6){
-            MAX_DEPTH = atoi(argv[i]);
-        }
-        if(i==7){
-            if (NORM_INPUT!=0 && NORM_INPUT!=1){
-                printf("NORM INPUT only be 0/1");
-                exit(1);
-            }
-            NORM_INPUT = atoi(argv[i]);
-        }
+      if(i==1){
+        PROPERTY = 0;
+        FULL_NET_PATH = strdup(argv[i]);
+      }
+      if(i==2){
+        NEED_PRINT = 0;
+        INPUT_FILE = argv[i];
+      }
+      if(i==3){
+        INF = atof(argv[i]);
+      }
+      if(i==4){
+        ORIG = atoi(argv[i]);
+      }
+      if(i==5){
+        TAR = atoi(argv[i]);
+        CHECK_ADV_MODE = 0;
+        MAX_DEPTH = 1000000;
+      }
     }
 
     printf("MAX_DEPTH: %d, NORM_INPUT: %d\n", MAX_DEPTH, NORM_INPUT);
-    return FULL_NET_PATH;
-}
-
-
-int main( int argc, char *argv[]){
-    char *FULL_NET_PATH = config_args(argc, argv);
     printf("%s\n", FULL_NET_PATH);
+    printf("Input file: %s\n", INPUT_FILE);
+    printf("Original label: %d, Target label: %d\n", ORIG, TAR);
     
     openblas_set_num_threads(1);
 
@@ -99,25 +67,9 @@ int main( int argc, char *argv[]){
 
     int image_start, image_length;
     if(PROPERTY == 0){
-        image_length = 100;
-        image_start = 0;
-        INF = 15;
-    }
-    else if(PROPERTY==1){
-        /*
-         * Customize your own property you want to verify
-         * For instance, you can check whether the first ouput is
-         * always the smallest or the second output is always
-         * less than 0.01
-         * For each property, you need to change (1) the dataset
-         * that you want to load in nnet.c; (2) the check_function
-         * and check_function1 in split.c.
-         */
-    }
-    else{
         image_length = 1;
         image_start = 0;
-        INF = 0;
+        INF = 15;
     }
 
     int adv_num = 0;
@@ -129,12 +81,11 @@ int main( int argc, char *argv[]){
     float avg_wrong_length = 0.0;
     
     for(int img_ind=0; img_ind<image_length;img_ind++){
-
         int img = image_start + img_ind;
         adv_found=0;
         can_t_prove=0;
         printf("start load network\n");
-        struct NNet* nnet = load_conv_network(FULL_NET_PATH, img);
+        struct NNet* nnet = load_conv_network(FULL_NET_PATH, INPUT_FILE);
         printf("done load network\n");
 
         int numLayers    = nnet->numLayers;
@@ -149,7 +100,7 @@ int main( int argc, char *argv[]){
         struct Matrix input_lower = {l,1,nnet->inputSize};
         struct Interval input_interval = {input_lower, input_upper};
 
-        initialize_input_interval(nnet, img, inputSize, input_prev, u, l);
+        initialize_input_interval(nnet, INPUT_FILE, inputSize, input_prev, u, l);
 
         if(NORM_INPUT){
             normalize_input(nnet, &input_prev_matrix);
@@ -235,10 +186,6 @@ int main( int argc, char *argv[]){
 
         
         //forward_prop(nnet, &input_prev_matrix, &output);
-        if(inputSize<10){
-            printf("concrete input:");
-            printMatrix(&input_prev_matrix);
-        }
         evaluate_conv(nnet, &input_prev_matrix, &output);
         printf("concrete output:");
         printMatrix(&output);
@@ -354,6 +301,7 @@ int main( int argc, char *argv[]){
                 printf("Regular Mode (No CHECK_ADV_MODE)\n");
             }
             // split
+            printf("Checking!");
             isOverlap = split_interval_conv_lp(nnet, &input_interval,\
                                 output_map,\
                                 equation, equation_err,\
