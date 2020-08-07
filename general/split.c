@@ -127,8 +127,11 @@ int check_min1(struct NNet *nnet, struct Matrix *output){
 
 
 int check_not_max1(struct NNet *nnet, struct Matrix *output){
-
-  return output->data[0] > output->data[1] && (output->data[0] - output->data[1] <= 0.3);
+  for ( unsigned i =0; i < 10; ++i){
+    if ( i != TAR && output->data[TAR] < output->data[i] )
+      return 0;
+  }
+  return 1;
 }
 
 

@@ -26,7 +26,7 @@ void sig_handler(int signo)
 int main( int argc, char *argv[]){
     char *FULL_NET_PATH;
     char* INPUT_FILE;
-    if(argc != 6) {
+    if(argc != 5) {
       printf("please specify a network\n");
       printf("./network_test [network] [inputfile]"
              " [inf] [orig] [tar]\n");
@@ -45,9 +45,6 @@ int main( int argc, char *argv[]){
         INF = atof(argv[i]);
       }
       if(i==4){
-        ORIG = atoi(argv[i]);
-      }
-      if(i==5){
         TAR = atoi(argv[i]);
         CHECK_ADV_MODE = 0;
         MAX_DEPTH = 1000000;
@@ -69,7 +66,6 @@ int main( int argc, char *argv[]){
     if(PROPERTY == 0){
         image_length = 1;
         image_start = 0;
-        INF = 15;
     }
 
     int adv_num = 0;
@@ -272,7 +268,7 @@ int main( int argc, char *argv[]){
                 output_map[oi]=0;
             }
         }
-        isOverlap = check_functions_norm(nnet, &output_interval);
+        isOverlap = 1;//check_functions_norm(nnet, &output_interval);
         lprec *lp;
         
         int rule_num = 0;
@@ -301,7 +297,7 @@ int main( int argc, char *argv[]){
                 printf("Regular Mode (No CHECK_ADV_MODE)\n");
             }
             // split
-            printf("Checking!");
+            printf("Checking!\n");
             isOverlap = split_interval_conv_lp(nnet, &input_interval,\
                                 output_map,\
                                 equation, equation_err,\
