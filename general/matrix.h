@@ -28,9 +28,6 @@ void matmul_with_bias(struct Matrix* A, struct Matrix* B, struct Matrix* C);
 
 void multiply(struct Matrix* A, struct Matrix* B);
 
-
-void *multiply_args(void *args);
-
 void printMatrix(struct Matrix* A);
 
 void fprintMatrix(FILE *fp, struct Matrix* A);
